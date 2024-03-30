@@ -1,57 +1,136 @@
 #include <stdio.h>
+#include <raylib.h>
 #include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#define POSITIONS 64
 #define MINES 10
+#define ROWS 8
+#define COLS 8
+#define BOXES (ROWS * COLS)
+#define WIDTH 350
+#define HEIGHT 450
+#define SIZE 25
 /* Colors */
-#define RED "\033[31m"
-#define BLUE "\033[34m"
-#define GREEN "\033[32m"
+#define REDC "\033[31m"
+#define BLUEC "\033[34m"
+#define GREENC "\033[32m"
 #define RESET "\033[0m"
 
+int *minePositions(void);
+int *possiblePos(int pst);
 char findMines(char *board, int pst);
-int *minePositions();
-int *possiblePos(char *board, int pst);
 char *boardMaker(char *board);
 char *newBoardMaker(char *board, int pst);
 void printBoard(char *board);
 void resetBoard(char *board);
 void cleanTerm();
+void panelDrawing(void);
+
+void panelDrawing(void)
+{
+  InitWindow(WIDTH, HEIGHT, "Minesweeper");
+
+  Color color = LIGHTGRAY;
+  Rectangle box[BOXES];
+
+  for (int i = 0; i < BOXES; i++) {
+    box[i].x = 64.5 + (i % COLS) * (SIZE+3);
+    box[i].y = 100 +  (i / COLS) * (SIZE+3);
+    box[i].width = SIZE;
+    box[i].height = SIZE;
+  }
+
+  while (!WindowShouldClose()) {
+    BeginDrawing();
+    ClearBackground(GRAY);
+
+    for (int i = 0; i < BOXES; i++)
+      DrawRectangleRec(box[i], color);
+
+    for (int i = 0; i < BOXES; i++) {
+      if (CheckCollisionPointRec(GetMousePosition(), box[i]) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        printf("La casilla fue presionada\n");
+    }
+
+    EndDrawing();
+  }
+
+  CloseWindow();
+
+}
 
 int main()
 {
-	char *board = calloc(POSITIONS, sizeof(int));
-	resetBoard(board);
+	char *board = calloc(BOXES, sizeof(int));
+	char *mirror = calloc(BOXES, sizeof(int));
 
-	cleanTerm();
+	resetBoard(board);
 	boardMaker(board);
-	for (int i = 0; i < POSITIONS; i++)
-	{
+
+	for (int i = 0; i < BOXES; i++)
 		newBoardMaker(board, i);
-	}
+
 	printBoard(board);
 
-	return 0;
 	free(board);
+	free(mirror);
+	return 0;
+}
+
+char *boardMaker(char *board)
+{
+	int *numbers = minePositions();
+
+	for (int i = 0; i < MINES; i++)
+		board[numbers[i]] = 'M';
+
+	return board;
+	free(numbers);
+}
+
+int *minePositions(void)
+{
+	srand(time(0));
+	int *mines = malloc(MINES * sizeof(int));
+
+	for (int i = 0; i < 10; i++) {
+		int newNumber;
+		int repeated;
+
+		do {
+			repeated = 0;  
+			newNumber = rand() % BOXES;  
+
+			for (int j = 0; j < i; j++)
+				if (mines[j] == newNumber)
+				{
+					repeated = 1;  
+					break;
+				}
+		} while (repeated);
+		mines[i] = newNumber;
+	}
+
+	return mines;
+
+	free(mines);
 }
 
 char findMines(char *board, int pst)
 {
 	int mines = 0;
-	if (board[pst] == 'Q')
-		return 'Q';
-	else
-	{
-		for (int i = 0; i < sizeof(possiblePos(board, pst)); i++)
-			if (board[pst + possiblePos(board, pst)[i]] == 'Q')
+	if (board[pst] != 'M') {
+		for (size_t i = 0; i < sizeof(possiblePos(pst)); i++) {
+			if (board[pst + possiblePos(pst)[i]] == 'M')
 				mines++;
+		}
 		if (mines == 0)
 			return ' ';
 		else 
 			return mines + '0';
 	}
+	return 'M';
 }
 
 char *newBoardMaker(char *board, int pst)
@@ -59,45 +138,6 @@ char *newBoardMaker(char *board, int pst)
 	if (board[pst] == ' ')
 		board[pst] = findMines(board, pst);
 	return board;
-}
-
-char *boardMaker(char *board)
-{
-	int *numbers = minePositions();
-
-	for (int i = 0; i < 10; i++)
-		board[numbers[i]] = 'Q';
-
-	return board;
-	free(numbers);
-}
-
-int* minePositions()
-{
-	srand(time(0));
-	int *array = malloc(10 * sizeof(int));
-
-	for (int i = 0; i < 10; i++) {
-		int nuevoNumero;
-		int repetido;
-
-		do {
-			repetido = 0;  
-			nuevoNumero = rand() % 64;  
-
-			for (int j = 0; j < i; j++) {
-				if (array[j] == nuevoNumero) {
-					repetido = 1;  
-					break;
-				}
-			}
-		} while (repetido);
-		array[i] = nuevoNumero;
-	}
-
-	return array;
-
-	free(array);
 }
 
 void printBoard(char *board) 
@@ -112,10 +152,10 @@ void printBoard(char *board)
 		{
 			if (board[k] == ' ')
 				printf(" %c %s", board[k], RESET);
-			else if (board[k] == 'Q')
-				printf(" %s%c %s", RED, board[k], RESET);
+			else if (board[k] == 'M')
+				printf(" %s%c %s", REDC, board[k], RESET);
 			else 
-				printf(" %s%c %s", BLUE, board[k], RESET);
+				printf(" %s%c %s", BLUEC, board[k], RESET);
 			printf("|");
 			k++;
 		}
@@ -125,7 +165,7 @@ void printBoard(char *board)
 }
 
 void resetBoard(char *board) {
-	for (int i = 0; i < POSITIONS; i++)
+	for (int i = 0; i < BOXES; i++)
 		board[i] = ' ';
 }
 
@@ -134,7 +174,7 @@ void cleanTerm()
 	system("clear");
 }
 
-int *possiblePos(char *board, int pst)
+int *possiblePos(int pst)
 {
 	int *numsToAdd = malloc(8 * sizeof(int));
 
@@ -167,8 +207,7 @@ int *possiblePos(char *board, int pst)
 		case 5:
 		case 6: 
 			numsToAdd[0] = -1;
-			numsToAdd[1] = 1;
-			numsToAdd[2] = 7;
+			numsToAdd[1] = 1; numsToAdd[2] = 7;
 			numsToAdd[3] = 8;
 			numsToAdd[4] = 9;
 			break;
