@@ -12,20 +12,13 @@
 #define WIDTH 350
 #define HEIGHT 400
 #define SIZE 25
-/* Colors */
-#define REDC "\033[31m"
-#define BLUEC "\033[34m"
-#define GREENC "\033[32m"
-#define RESET "\033[0m"
 
 int *minePositions(void);
 int *possiblePos(int pst);
 char findMines(char *board, int pst);
 char *boardMaker(char *board);
 char *newBoardMaker(char *board, int pst);
-void printBoard(char *board);
 void resetBoard(char *board);
-void cleanTerm();
 void panelDrawing(char *board);
 
 void panelDrawing(char *board)
@@ -152,38 +145,9 @@ char *newBoardMaker(char *board, int pst)
 	return board;
 }
 
-void printBoard(char *board) 
-{
-	int k = 0;
-
-	printf("|---|---|---|---|---|---|---|---|\n");
-	for (int i = 0; i < 8; i++)
-	{
-		printf("|");
-		for (int j = 0; j < 8; j++)
-		{
-			if (board[k] == ' ')
-				printf(" %c %s", board[k], RESET);
-			else if (board[k] == 'M')
-				printf(" %s%c %s", REDC, board[k], RESET);
-			else 
-				printf(" %s%c %s", BLUEC, board[k], RESET);
-			printf("|");
-			k++;
-		}
-		printf("\n");
-		printf("|---|---|---|---|---|---|---|---|\n");
-	}
-}
-
 void resetBoard(char *board) {
 	for (int i = 0; i < BOXES; i++)
 		board[i] = ' ';
-}
-
-void cleanTerm()
-{
-	system("clear");
 }
 
 int *possiblePos(int pst)
