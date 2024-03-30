@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-#include <stdbool.h>
 #include <raylib.h>
 
 #define MINES 10
@@ -24,7 +23,8 @@ void panelDrawing(char *board);
 void panelDrawing(char *board)
 {
   InitWindow(WIDTH, HEIGHT, "Minesweeper");
-	bool boxClicked[BOXES] = {false};
+	int boxClicked[BOXES] = {0};
+	int exit = 1;
 
   Color color = GRAY;
   Rectangle box[BOXES];
@@ -36,7 +36,7 @@ void panelDrawing(char *board)
     box[i].height = SIZE;
   }
 
-  while (!WindowShouldClose()) {
+  while (exit) {
     BeginDrawing();
     ClearBackground(LIGHTGRAY);
 
@@ -50,13 +50,11 @@ void panelDrawing(char *board)
 			str[2] = '\0';
 
       if (CheckCollisionPointRec(GetMousePosition(), box[i]) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-				boxClicked[i] = true;
+				boxClicked[i] = 1;
 
 			if (boxClicked[i]) {
-				if (str[1] == 'M')
-					DrawText(str, box[i].x, box[i].y, 20, RED);
-				else 
-					DrawText(str, box[i].x, box[i].y, 20, WHITE);
+				if (str[1] == 'M') exit = 0;
+				else DrawText(str, box[i].x, box[i].y, 20, WHITE);
 			}
     }
 
@@ -127,13 +125,10 @@ char findMines(char *board, int pst)
 	int mines = 0;
 	if (board[pst] != 'M') {
 		for (size_t i = 0; i < sizeof(possiblePos(pst)); i++) {
-			if (board[pst + possiblePos(pst)[i]] == 'M')
-				mines++;
+			if (board[pst + possiblePos(pst)[i]] == 'M') mines++;
 		}
-		if (mines == 0)
-			return ' ';
-		else 
-			return mines + '0';
+		if (mines == 0) return ' ';
+		else return mines + '0';
 	}
 	return 'M';
 }
