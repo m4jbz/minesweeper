@@ -1,15 +1,16 @@
 #include <stdio.h>
-#include <raylib.h>
-#include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
+#include <stdbool.h>
+#include <raylib.h>
 
 #define MINES 10
 #define ROWS 8
 #define COLS 8
 #define BOXES (ROWS * COLS)
 #define WIDTH 350
-#define HEIGHT 450
+#define HEIGHT 400
 #define SIZE 25
 /* Colors */
 #define REDC "\033[31m"
@@ -25,32 +26,45 @@ char *newBoardMaker(char *board, int pst);
 void printBoard(char *board);
 void resetBoard(char *board);
 void cleanTerm();
-void panelDrawing(void);
+void panelDrawing(char *board);
 
-void panelDrawing(void)
+void panelDrawing(char *board)
 {
   InitWindow(WIDTH, HEIGHT, "Minesweeper");
+	bool boxClicked[BOXES] = {false};
 
-  Color color = LIGHTGRAY;
+  Color color = GRAY;
   Rectangle box[BOXES];
 
   for (int i = 0; i < BOXES; i++) {
     box[i].x = 64.5 + (i % COLS) * (SIZE+3);
-    box[i].y = 100 +  (i / COLS) * (SIZE+3);
+    box[i].y = 80 +  (i / COLS) * (SIZE+3);
     box[i].width = SIZE;
     box[i].height = SIZE;
   }
 
   while (!WindowShouldClose()) {
     BeginDrawing();
-    ClearBackground(GRAY);
+    ClearBackground(LIGHTGRAY);
 
     for (int i = 0; i < BOXES; i++)
       DrawRectangleRec(box[i], color);
 
     for (int i = 0; i < BOXES; i++) {
+			char str[3];
+			str[0] = ' ';
+			str[1] = board[i];
+			str[2] = '\0';
+
       if (CheckCollisionPointRec(GetMousePosition(), box[i]) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        printf("La casilla fue presionada\n");
+				boxClicked[i] = true;
+
+			if (boxClicked[i]) {
+				if (str[1] == 'M')
+					DrawText(str, box[i].x, box[i].y, 20, RED);
+				else 
+					DrawText(str, box[i].x, box[i].y, 20, WHITE);
+			}
     }
 
     EndDrawing();
@@ -60,21 +74,19 @@ void panelDrawing(void)
 
 }
 
-int main()
+int main(void)
 {
 	char *board = calloc(BOXES, sizeof(int));
-	char *mirror = calloc(BOXES, sizeof(int));
 
 	resetBoard(board);
 	boardMaker(board);
 
 	for (int i = 0; i < BOXES; i++)
 		newBoardMaker(board, i);
-
-	printBoard(board);
+	
+	panelDrawing(board);
 
 	free(board);
-	free(mirror);
 	return 0;
 }
 
@@ -144,10 +156,10 @@ void printBoard(char *board)
 {
 	int k = 0;
 
-	printf("%*s|---|---|---|---|---|---|---|---|\n", 55, "");
+	printf("|---|---|---|---|---|---|---|---|\n");
 	for (int i = 0; i < 8; i++)
 	{
-		printf("%*s|", 55, "");
+		printf("|");
 		for (int j = 0; j < 8; j++)
 		{
 			if (board[k] == ' ')
@@ -160,7 +172,7 @@ void printBoard(char *board)
 			k++;
 		}
 		printf("\n");
-		printf("%*s|---|---|---|---|---|---|---|---|\n", 55, "");
+		printf("|---|---|---|---|---|---|---|---|\n");
 	}
 }
 
