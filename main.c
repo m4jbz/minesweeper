@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <raylib.h>
+#include <stdbool.h>
 
 #define MINES 10
 #define ROWS 8
@@ -27,6 +28,31 @@ void panelDrawing(char *board);
 void youLose(void);
 void printBoard(char *board);
 void result(char *text, Color bg, Color fg);
+void floodFill(int i, Rectangle box[BOXES], char *board);
+
+void floodFill(int i, Rectangle box[BOXES], char *board)
+{
+	int *positions = possiblePos(i);
+	int length = 0;
+
+	while (positions[length] != 0) length++;
+
+	DrawRectangleRec(box[i], DARKGRAY);
+
+	for (int j = 0; j < length; j++) {
+		int i2 = i + positions[j];
+
+		if (board[i2] == ' ') {
+			DrawRectangleRec(box[i2], DARKGRAY);
+		}
+		else {
+			char str[3] = { ' ', board[i2], '\0'};
+			DrawText(str, box[i2].x, box[i2].y, 20, WHITE);
+		}
+	}
+
+	free(positions);
+}
 
 int main(void)
 {
@@ -37,7 +63,11 @@ int main(void)
 
 	for (int i = 0; i < BOXES; i++)
 		newBoardMaker(board, i);
-panelDrawing(board); free(board); return 0; }
+
+	panelDrawing(board); free(board); 
+
+	return 0; 
+}
 
 char *boardMaker(char *board)
 {
@@ -56,6 +86,9 @@ void panelDrawing(char *board)
   InitWindow(WIDTH, HEIGHT, "Minesweeper");
 	int boxClicked[BOXES] = {0};
 	int exit = 1, cont = 0;
+	char str[3];
+	str[0] = ' ';
+	str[2] = '\0';
 
   Color color = GRAY;
   Rectangle box[BOXES];
@@ -67,18 +100,25 @@ void panelDrawing(char *board)
     box[i].height = SIZE;
   }
 
+	int place;
+	bool find = false;
+
   while (!WindowShouldClose() && exit) {
     BeginDrawing();
     ClearBackground(LIGHTGRAY);
 
-    for (int i = 0; i < BOXES; i++)
+    for (int i = 0; i < BOXES; i++) {
       DrawRectangleRec(box[i], color);
+			if (board[i] == ' ' && !find) {
+				place = i;
+				find = true;
+			}
+		}
+		
+		DrawRectangleRec(box[place], VIOLET);
 
     for (int i = 0; i < BOXES; i++) {
-			char str[3];
-			str[0] = ' ';
 			str[1] = board[i];
-			str[2] = '\0';
 
       if (CheckCollisionPointRec(GetMousePosition(), box[i]) && 
 					IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !boxClicked[i]) 
@@ -93,18 +133,7 @@ void panelDrawing(char *board)
 					DrawText(str, box[i].x, box[i].y, 20, RED);
 					exit = 0;
 				}
-				else if (str[1] == ' ') {
-					int *positions = possiblePos(i);
-					int length = 0;
-
-					while (positions[length] != 0) length++;
-
-					DrawRectangleRec(box[i], BLUE);
-					for (int j = 0; j < length; j++) {
-						DrawRectangleRec(box[i + positions[j]], BLUE);
-					}
-					free(positions);
-				}
+				else if (str[1] == ' ') floodFill(i, box, board);
 				else DrawText(str, box[i].x, box[i].y, 20, WHITE);
 
 			}
@@ -125,13 +154,11 @@ void panelDrawing(char *board)
   }
 
   CloseWindow();
-
 }
-
 
 int *minePositions(void)
 {
-	srand(69);
+	srand(time(0));
 	int *mines = malloc(MINES * sizeof(int));
 
 	for (int i = 0; i < 10; i++) {
