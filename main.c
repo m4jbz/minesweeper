@@ -37,12 +37,7 @@ int main(void)
 
 	for (int i = 0; i < BOXES; i++)
 		newBoardMaker(board, i);
-
-	panelDrawing(board);
-
-	free(board);
-	return 0;
-}
+panelDrawing(board); free(board); return 0; }
 
 char *boardMaker(char *board)
 {
@@ -60,8 +55,7 @@ void panelDrawing(char *board)
 	SetTargetFPS(60);
   InitWindow(WIDTH, HEIGHT, "Minesweeper");
 	int boxClicked[BOXES] = {0};
-	int exit = 1;
-	int cont = 0;
+	int exit = 1, cont = 0;
 
   Color color = GRAY;
   Rectangle box[BOXES];
@@ -86,7 +80,9 @@ void panelDrawing(char *board)
 			str[1] = board[i];
 			str[2] = '\0';
 
-      if (CheckCollisionPointRec(GetMousePosition(), box[i]) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !boxClicked[i]) {
+      if (CheckCollisionPointRec(GetMousePosition(), box[i]) && 
+					IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !boxClicked[i]) 
+			{
 				boxClicked[i] = 1;
 				cont++;
 				printf("cont: %d\n", cont);
@@ -97,10 +93,23 @@ void panelDrawing(char *board)
 					DrawText(str, box[i].x, box[i].y, 20, RED);
 					exit = 0;
 				}
-				else if (str[1] == ' ') DrawText(" 0\0", box[i].x, box[i].y, 20, BLACK);
+				else if (str[1] == ' ') {
+					int *positions = possiblePos(i);
+					int length = 0;
+
+					while (positions[length] != 0) length++;
+
+					DrawRectangleRec(box[i], BLUE);
+					for (int j = 0; j < length; j++) {
+						DrawRectangleRec(box[i + positions[j]], BLUE);
+					}
+					free(positions);
+				}
 				else DrawText(str, box[i].x, box[i].y, 20, WHITE);
+
 			}
     }
+
     EndDrawing();
 
 		if (exit == 0) {
@@ -173,9 +182,66 @@ void resetBoard(char *board) {
 		board[i] = ' ';
 }
 
+void result(char *text, Color bg, Color fg)
+{
+  InitWindow(800, 450, text);
+	Rectangle exitRect[1];
+
+	int check = 0;
+	int exit = 1;
+
+	exitRect[0].x = 375 + (0 % COLS) * (SIZE+3);
+	exitRect[0].y = 280 +  (0 / COLS) * (SIZE+3);
+	exitRect[0].width = 53;
+	exitRect[0].height = 20;
+
+  while (!WindowShouldClose() && exit) {
+    BeginDrawing();
+    ClearBackground(bg);
+
+		DrawText(text, 330, 200, 30, fg);
+		DrawRectangleRec(exitRect[0], LIGHTGRAY);
+		DrawText(" Exit", exitRect[0].x, exitRect[0].y, 20, BLACK);
+
+		if (CheckCollisionPointRec(GetMousePosition(), exitRect[0]) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+			check = 1;
+
+		if (check) {
+			exit = 0;
+		}
+
+    EndDrawing();
+  }
+
+}
+
+void printBoard(char *board)
+{
+	int k = 0;
+
+	printf("|---|---|---|---|---|---|---|---|\n");
+	for (int i = 0; i < 8; i++)
+	{
+		printf("|");
+		for (int j = 0; j < 8; j++)
+		{
+			if (board[k] == ' ')
+				printf(" %c %s", board[k], RESET);
+			else if (board[k] == 'M')
+				printf(" %s%c %s", REDC, board[k], RESET);
+			else 
+				printf(" %s%c %s", BLUEC, board[k], RESET);
+			printf("|");
+			k++;
+		}
+		printf("\n");
+		printf("|---|---|---|---|---|---|---|---|\n");
+	}
+}
+
 int *possiblePos(int pst)
 {
-	int *numsToAdd = malloc(8 * sizeof(int));
+	int *numsToAdd = calloc(8, sizeof(int));
 
 	switch (pst)
 	{
@@ -259,61 +325,4 @@ int *possiblePos(int pst)
 
 	return numsToAdd;
 	free(numsToAdd);
-}
-
-void result(char *text, Color bg, Color fg)
-{
-  InitWindow(800, 450, text);
-	Rectangle exitRect[1];
-
-	int check = 0;
-	int exit = 1;
-
-	exitRect[0].x = 375 + (0 % COLS) * (SIZE+3);
-	exitRect[0].y = 280 +  (0 / COLS) * (SIZE+3);
-	exitRect[0].width = 53;
-	exitRect[0].height = 20;
-
-  while (!WindowShouldClose() && exit) {
-    BeginDrawing();
-    ClearBackground(bg);
-
-		DrawText(text, 330, 200, 30, fg);
-		DrawRectangleRec(exitRect[0], LIGHTGRAY);
-		DrawText(" Exit", exitRect[0].x, exitRect[0].y, 20, BLACK);
-
-		if (CheckCollisionPointRec(GetMousePosition(), exitRect[0]) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-			check = 1;
-
-		if (check) {
-			exit = 0;
-		}
-
-    EndDrawing();
-  }
-
-}
-
-void printBoard(char *board)
-{
-	int k = 0;
-
-	printf("|---|---|---|---|---|---|---|---|\n");
-	for (int i = 0; i < 8; i++)
-	{
-		printf("|");
-		for (int j = 0; j < 8; j++)
-		{
-			if (board[k] == ' ')
-				printf(" %c %s", board[k], RESET);
-			else if (board[k] == 'M')
-				printf(" %s%c %s", REDC, board[k], RESET);
-			else 
-				printf(" %s%c %s", BLUEC, board[k], RESET);
-			printf("|");
-			k++;
-		}
-		printf("\n");
-		printf("|---|---|---|---|---|---|---|---|\n");
-	}
 }
