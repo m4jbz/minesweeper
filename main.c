@@ -26,6 +26,7 @@ void resetBoard(char *board);
 void panelDrawing(char *board);
 void youLose(void);
 void printBoard(char *board);
+void result(char *text, Color bg, Color fg);
 
 int main(void)
 {
@@ -53,12 +54,14 @@ char *boardMaker(char *board)
 	return board;
 	free(numbers);
 }
+
 void panelDrawing(char *board)
 {
 	SetTargetFPS(60);
   InitWindow(WIDTH, HEIGHT, "Minesweeper");
 	int boxClicked[BOXES] = {0};
 	int exit = 1;
+	int cont = 0;
 
   Color color = GRAY;
   Rectangle box[BOXES];
@@ -83,8 +86,11 @@ void panelDrawing(char *board)
 			str[1] = board[i];
 			str[2] = '\0';
 
-      if (CheckCollisionPointRec(GetMousePosition(), box[i]) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+      if (CheckCollisionPointRec(GetMousePosition(), box[i]) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !boxClicked[i]) {
 				boxClicked[i] = 1;
+				cont++;
+				printf("cont: %d\n", cont);
+			}
 
 			if (boxClicked[i]) {
 				if (str[1] == 'M') {
@@ -99,7 +105,13 @@ void panelDrawing(char *board)
 
 		if (exit == 0) {
 			WaitTime(0.5);
-			youLose();
+			result("You Lose", RED, GREEN);
+		}
+
+		if (cont == 54) {
+			WaitTime(0.5);
+			exit = 0;
+			result("You Win", GREEN, RED);
 		}
   }
 
@@ -249,9 +261,9 @@ int *possiblePos(int pst)
 	free(numsToAdd);
 }
 
-void youLose(void)
+void result(char *text, Color bg, Color fg)
 {
-  InitWindow(800, 450, "You Lose");
+  InitWindow(800, 450, text);
 	Rectangle exitRect[1];
 
 	int check = 0;
@@ -264,9 +276,9 @@ void youLose(void)
 
   while (!WindowShouldClose() && exit) {
     BeginDrawing();
-    ClearBackground(RED);
+    ClearBackground(bg);
 
-		DrawText("You Lose", 330, 200, 30, GREEN);
+		DrawText(text, 330, 200, 30, fg);
 		DrawRectangleRec(exitRect[0], LIGHTGRAY);
 		DrawText(" Exit", exitRect[0].x, exitRect[0].y, 20, BLACK);
 
@@ -279,6 +291,7 @@ void youLose(void)
 
     EndDrawing();
   }
+
 }
 
 void printBoard(char *board)
