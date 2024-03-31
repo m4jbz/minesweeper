@@ -18,6 +18,8 @@
 #define GREENC "\033[32m"
 #define RESET "\033[0m"
 
+int cont = 0;
+
 int *minePositions(void);
 int *possiblePos(int pst);
 char findMines(char *board, int pst);
@@ -30,30 +32,6 @@ void printBoard(char *board);
 void result(char *text, Color bg, Color fg);
 void floodFill(int i, Rectangle box[BOXES], char *board);
 
-void floodFill(int i, Rectangle box[BOXES], char *board)
-{
-	int *positions = possiblePos(i);
-	int length = 0;
-
-	while (positions[length] != 0) length++;
-
-	DrawRectangleRec(box[i], DARKGRAY);
-
-	for (int j = 0; j < length; j++) {
-		int i2 = i + positions[j];
-
-		if (board[i2] == ' ') {
-			DrawRectangleRec(box[i2], DARKGRAY);
-		}
-		else {
-			char str[3] = { ' ', board[i2], '\0'};
-			DrawText(str, box[i2].x, box[i2].y, 20, WHITE);
-		}
-	}
-
-	free(positions);
-}
-
 int main(void)
 {
 	char *board = calloc(BOXES, sizeof(int));
@@ -64,8 +42,9 @@ int main(void)
 	for (int i = 0; i < BOXES; i++)
 		newBoardMaker(board, i);
 
-	panelDrawing(board); free(board); 
+	panelDrawing(board); 
 
+	free(board); 
 	return 0; 
 }
 
@@ -80,12 +59,13 @@ char *boardMaker(char *board)
 	free(numbers);
 }
 
+
 void panelDrawing(char *board)
 {
 	SetTargetFPS(60);
   InitWindow(WIDTH, HEIGHT, "Minesweeper");
 	int boxClicked[BOXES] = {0};
-	int exit = 1, cont = 0;
+	int exit = 1;
 	char str[3];
 	str[0] = ' ';
 	str[2] = '\0';
@@ -100,7 +80,7 @@ void panelDrawing(char *board)
     box[i].height = SIZE;
   }
 
-	int place;
+	int place; // posicion donde hay un 0
 	bool find = false;
 
   while (!WindowShouldClose() && exit) {
@@ -158,7 +138,7 @@ void panelDrawing(char *board)
 
 int *minePositions(void)
 {
-	srand(time(0));
+  srand(9);
 	int *mines = malloc(MINES * sizeof(int));
 
 	for (int i = 0; i < 10; i++) {
@@ -352,4 +332,90 @@ int *possiblePos(int pst)
 
 	return numsToAdd;
 	free(numsToAdd);
+}
+
+// ugly ass function, i need to rewrite but idk how 
+void floodFill(int i, Rectangle box[BOXES], char *board) {
+	int *positions = possiblePos(i);
+	int length = 0;
+
+	while (positions[length] != 0) length++;
+
+	DrawRectangleRec(box[i], DARKGRAY);
+
+	for (int j = 0; j < length; j++) {
+		int i2 = i + positions[j];
+
+		if (board[i2] == ' ') {
+			int *positions2 = possiblePos(i2);
+			int length2 = 0;
+
+			while (positions2[length2] != 0) length2++;
+
+			DrawRectangleRec(box[i2], DARKGRAY);
+
+			for (int j2 = 0; j2 < length2; j2++) {
+				int i3 = i2 + positions2[j2];
+
+				if (board[i3] == ' ') {
+					int *positions3 = possiblePos(i3);
+					int length3 = 0;
+
+					while (positions3[length3] != 0) length3++;
+
+					DrawRectangleRec(box[i3], DARKGRAY);
+
+					for (int j3 = 0; j3 < length3; j3++) {
+						int i4 = i3 + positions3[j3];
+
+						if (board[i4] == ' ') {
+							int *positions4 = possiblePos(i4);
+							int length4 = 0;
+
+							while (positions4[length4] != 0) length4++;
+
+							DrawRectangleRec(box[i4], DARKGRAY);
+
+							for (int j4 = 0; j4 < length4; j4++) {
+								int i5 = i4 + positions4[j4];
+
+								if (board[i5] == ' ') {
+									DrawRectangleRec(box[i5], DARKGRAY);
+									int *positions5 = possiblePos(i5);
+									int length5 = 0;
+
+									while (positions5[length5] != 0) length5++;
+
+									for (int j5 = 0; j5 < length5; j5++) {
+										int i6 = i5 + positions5[j5];
+
+										if (board[i6] == ' ') {
+											DrawRectangleRec(box[i6], DARKGRAY);
+										} else if (board[i6] != 'M') {
+												char str[3] = { ' ', board[i6], '\0' };
+												DrawText(str, box[i6].x, box[i6].y, 20, WHITE);
+										}
+									}
+								} else if (board[i5] != 'M') {
+										char str[3] = { ' ', board[i5], '\0' };
+										DrawText(str, box[i5].x, box[i5].y, 20, WHITE);
+								}
+							}
+						} else if (board[i4] != 'M') {
+								char str[3] = { ' ', board[i4], '\0' };
+								DrawText(str, box[i4].x, box[i4].y, 20, WHITE);
+						}
+					}
+				} else if (board[i3] != 'M') {
+						char str[3] = { ' ', board[i3], '\0' };
+						DrawText(str, box[i3].x, box[i3].y, 20, WHITE);
+				}
+			}
+		} else {
+				char str[3] = { ' ', board[i2], '\0' };
+				DrawText(str, box[i2].x, box[i2].y, 20, WHITE);
+		}
+	}
+
+	free(positions);
 }
